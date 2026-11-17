@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoffreLocal — Gestionnaire de mots de passe</title>
+  <style>
+    :root {
+      --bg-app: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --bg-hover: #e2e8f0;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-light: #94a3b8;
+      --primary: #175ddc;
+      --primary-hover: #134cb5;
+      --primary-soft: #eff6ff;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --danger-soft: #fef2f2;
+      --success: #16a34a;
+      --warning: #d97706;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root.auto-theme {
+        --bg-app: #0b1120;
+        --bg-surface: #1e293b;
+        --bg-subtle: #0f172a;
+        --bg-hover: #334155;
+        --border: #334155;
+        --border-strong: #475569;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --text-light: #64748b;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        --primary-soft: rgba(59, 130, 246, 0.15);
+        --danger: #ef4444;
+        --danger-hover: #dc2626;
+        --danger-soft: rgba(239, 68, 68, 0.15);
+      }
+    }
+
+    :root.dark {
+      --bg-app: #0b1120;
+      --bg-surface: #1e293b;
+      --bg-subtle: #0f172a;
+      --bg-hover: #334155;
+      --border: #334155;
+      --border-strong: #475569;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-light: #64748b;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-soft: rgba(59, 130, 246, 0.15);
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --danger-soft: rgba(239, 68, 68, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      font-size: 0.9375rem;
+      color: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Boutons standards */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg-subtle);
+      border-color: var(--border-strong);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-soft);
+      color: var(--danger);
+      border: 1px solid transparent;
+    }
+
+    .btn-danger:hover {
+      background-color: var(--danger);
+      color: #ffffff;
+    }
+
+    .btn-icon {
+      padding: 7px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-icon:hover {
+      background-color: var(--bg-subtle);
+      color: var(--text-main);
+    }
+
+    /* Champs de formulaire */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+
+    .input-actions {
+      position: absolute;
+      right: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Ecran d'authentification */
+    .auth-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background-color: var(--primary);
+      color: #ffffff;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .auth-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .strength-bar {
+      height: 4px;
+      background-color: var(--bg-subtle);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .strength-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.2s, background-color 0.2s;
+    }
+
+    .strength-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .auth-footer {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8125rem;
+    }
+
+    .link-btn {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .link-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Interface principale du coffre */
+    .app-header {
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex: 1;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      max-width: 440px;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      pointer-events: none;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px 8px 36px;
+      background-color: var(--bg-subtle);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      outline: none;
+    }
+
+    .search-box input:focus {
+      background-color: var(--bg-surface);
+      border-color: var(--primary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-layout {
+      display: flex;
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      gap: 24px;
+    }
+
+    .sidebar {
+      width: 230px;
+      flex-shrink: 0;
+    }
+
+    .nav-section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-light);
+      margin-bottom: 8px;
+      padding: 0 12px;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 24px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover {
+      background-color: var(--bg-subtle);
+      color: var(--text-main);
+    }
+
+    .nav-item.active {
+      background-color: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .nav-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-count {
+      font-size: 0.75rem;
+      background-color: var(--bg-subtle);
+      color: var(--text-muted);
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+
+    .nav-item.active .badge-count {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
+
+    /* Liste des éléments */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .content-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .content-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .vault-list {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .vault-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+      transition: background-color 0.1s;
+    }
+
+    .vault-item:last-child {
+      border-bottom: none;
+    }
+
+    .vault-item:hover {
+      background-color: var(--bg-subtle);
+    }
+
+    .item-main {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .item-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: var(--primary);
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+
+    .item-details {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .item-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .item-title {
+      font-weight: 600;
+      font-size: 0.9375rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-sub {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .action-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background-color: var(--bg-surface);
+      color: var(--text-muted);
+    }
+
+    .action-pill:hover {
+      border-color: var(--border-strong);
+      color: var(--text-main);
+    }
+
+    .empty-state {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      color: var(--text-light);
+      margin-bottom: 12px;
+    }
+
+    .empty-state h3 {
+      font-size: 1rem;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .empty-state p {
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+
+    /* Modales */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .modal-box {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-md);
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1.0625rem;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background-color: var(--bg-subtle);
+      border-bottom-left-radius: var(--radius-lg);
+      border-bottom-right-radius: var(--radius-lg);
+    }
+
+    .mono-input {
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
+    }
+
+    /* Générateur de mot de passe */
+    .gen-output {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 1.0625rem;
+      word-break: break-all;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      font-size: 0.875rem;
+    }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    /* Notification Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background-color: var(--text-main);
+      color: var(--bg-surface);
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .toast.hidden-toast {
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+    }
+
+    .alert-box {
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      margin-bottom: 16px;
+      background-color: var(--danger-soft);
+      color: var(--danger);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    .info-box {
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      margin-bottom: 16px;
+      background-color: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    @media (max-width: 768px) {
+      .app-header {
+        flex-wrap: wrap;
+        padding: 12px 16px;
+      }
+      .header-left {
+        width: 100%;
+        order: 1;
+      }
+      .header-actions {
+        width: 100%;
+        order: 2;
+        justify-content: space-between;
+        overflow-x: auto;
+      }
+      .app-layout {
+        flex-direction: column;
+        padding: 16px;
+        gap: 16px;
+      }
+      .sidebar {
+        width: 100%;
+      }
+      .nav-list {
+        flex-direction: row;
+        overflow-x: auto;
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+      }
+      .nav-item {
+        width: auto;
+        white-space: nowrap;
+      }
+      .nav-section-title, .sidebar-info {
+        display: none;
+      }
+      .vault-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .item-actions {
+        width: 100%;
+        justify-content: flex-end;
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body class="auto-theme">
+
+  <!-- ÉCRAN 1 : CRÉATION OU DÉVERROUILLAGE DU COFFRE -->
+  <div id="authScreen" class="auth-container">
+    <div class="auth-card">
+      <div class="brand-header">
+        <div class="brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">CoffreLocal</div>
+          <div class="brand-subtitle">Chiffrement AES-256 hors-ligne</div>
+        </div>
+      </div>
+
+      <div id="authError" class="alert-box hidden"></div>
+
+      <!-- Formulaire de création (affiché si aucun coffre n'existe) -->
+      <form id="createVaultForm" class="hidden">
+        <p class="auth-desc">
+          Créez votre mot de passe maître. Vos données sont chiffrées localement sur cet appareil et ne sont jamais envoyées sur Internet.
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="newMasterPassword">Mot de passe maître</label>
+          <div class="input-wrapper">
+            <input type="password" id="newMasterPassword" class="form-control" placeholder="Minimum 8 caractères" required minlength="8">
+            <div class="input-actions">
+              <button type="button" class="btn-icon toggle-vis" data-target="newMasterPassword" title="Afficher/Masquer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </div>
+          <div class="strength-bar"><div id="masterStrengthFill" class="strength-fill"></div></div>
+          <div class="strength-text">
+            <span>Robustesse</span>
+            <span id="masterStrengthLabel">Vide</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirmMasterPassword">Confirmer le mot de passe maître</label>
+          <input type="password" id="confirmMasterPassword" class="form-control" placeholder="Répétez le mot de passe" required>
+        </div>
+
+        <div class="info-box">
+          Important : Aucun serveur ne stocke ce mot de passe. En cas d'oubli, il est impossible de récupérer vos données.
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Créer le coffre-fort</button>
+      </form>
+
+      <!-- Formulaire de déverrouillage (affiché si un coffre existe) -->
+      <form id="unlockVaultForm" class="hidden">
+        <p class="auth-desc">
+          Votre coffre-fort est verrouillé. Saisissez votre mot de passe maître pour déchiffrer vos accès.
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="masterPasswordInput">Mot de passe maître</label>
+          <div class="input-wrapper">
+            <input type="password" id="masterPasswordInput" class="form-control" placeholder="Votre mot de passe maître" required>
+            <div class="input-actions">
+              <button type="button" class="btn-icon toggle-vis" data-target="masterPasswordInput" title="Afficher/Masquer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="unlockSubmitBtn" class="btn btn-primary" style="width: 100%;">Déverrouiller</button>
+      </form>
+
+      <div class="auth-footer">
+        <button type="button" id="authImportBtn" class="link-btn">Importer une sauvegarde (.json)</button>
+        <button type="button" id="resetVaultBtn" class="link-btn hidden" style="color: var(--danger);">Réinitialiser</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉCRAN 2 : APPLICATION PRINCIPALE (COFFRE DÉVERROUILLÉ) -->
+  <div id="vaultScreen" class="hidden" style="flex-direction: column; min-height: 100vh;">
+    <header class="app-header">
+      <div class="header-left">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="brand-logo" style="width: 32px; height: 32px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <span style="font-weight: 700; font-size: 1.0625rem;">CoffreLocal</span>
+        </div>
+
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="search" id="searchInput" placeholder="Rechercher un site, identifiant ou note...">
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" id="openGeneratorBtn" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+          Générateur
+        </button>
+        <button type="button" id="exportVaultBtn" class="btn btn-secondary" title="Télécharger une copie chiffrée">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Sauvegarder
+        </button>
+        <button type="button" id="themeToggleBtn" class="btn btn-secondary" title="Changer de thème" style="padding: 9px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+        <button type="button" id="lockVaultBtn" class="btn btn-secondary" title="Verrouiller immédiatement">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Verrouiller
+        </button>
+      </div>
+    </header>
+
+    <div class="app-layout">
+      <aside class="sidebar">
+        <div class="nav-section-title">Filtres</div>
+        <ul class="nav-list" id="categoryNav">
+          <li>
+            <button type="button" class="nav-item active" data-filter="all">
+              <span class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Tous les éléments
+              </span>
+              <span class="badge-count" id="count-all">0</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="nav-item" data-filter="favorites">
+              <span class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                Favoris
+              </span>
+              <span class="badge-count" id="count-favorites">0</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="nav-item" data-filter="login">
+              <span class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                Connexions
+              </span>
+              <span class="badge-count" id="count-login">0</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="nav-item" data-filter="card">
+              <span class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                Cartes & Banque
+              </span>
+              <span class="badge-count" id="count-card">0</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="nav-item" data-filter="note">
+              <span class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                Notes sécurisées
+              </span>
+              <span class="badge-count" id="count-note">0</span>
+            </button>
+          </li>
+        </ul>
+
+        <div class="sidebar-info" style="padding: 12px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.75rem; color: var(--text-muted);">
+          <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Stockage local</div>
+          <div id="storageStats">Utilisation : 0 Ko / 1 Go</div>
+          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
+            Verrouillage auto après 5 min d'inactivité.
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-header">
+          <h1 class="content-title" id="currentCategoryTitle">Tous les éléments</h1>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="vaultImportBtn" class="btn btn-secondary">Importer</button>
+            <button type="button" id="newItemBtn" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Nouvel élément
+            </button>
+          </div>
+        </div>
+
+        <div id="vaultList" class="vault-list"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODALE : AJOUTER / MODIFIER UN ÉLÉMENT -->
+  <div id="itemModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title" id="itemModalTitle">Nouvel élément</h2>
+        <button type="button" class="btn-icon close-modal" data-modal="itemModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="itemForm" style="display: flex; flex-direction: column; overflow: hidden;">
+        <div class="modal-body">
+          <input type="hidden" id="entryId">
+
+          <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; margin-bottom: 16px;">
+            <div>
+              <label class="form-label" for="entryCategory">Type d'élément</label>
+              <select id="entryCategory" class="form-control">
+                <option value="login">Connexion (Site / Application)</option>
+                <option value="card">Carte / Compte bancaire</option>
+                <option value="note">Note sécurisée</option>
+              </select>
+            </div>
+            <label class="checkbox-label" style="padding-bottom: 10px;">
+              <input type="checkbox" id="entryFavorite">
+              <span>Favori</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="entryName">Nom du service *</label>
+            <input type="text" id="entryName" class="form-control" placeholder="ex: Messagerie, Banque, GitHub..." required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="entryUsername">Identifiant / Email / Numéro</label>
+            <input type="text" id="entryUsername" class="form-control" placeholder="ex: nom@domaine.fr">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="entryPassword">Mot de passe / Code secret</label>
+            <div class="input-wrapper">
+              <input type="password" id="entryPassword" class="form-control mono-input" style="padding-right: 76px;" placeholder="••••••••••••">
+              <div class="input-actions">
+                <button type="button" id="inlineGenerateBtn" class="btn-icon" title="Générer un mot de passe fort">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                </button>
+                <button type="button" class="btn-icon toggle-vis" data-target="entryPassword" title="Afficher/Masquer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="entryUrl">Adresse web (URL)</label>
+            <input type="text" id="entryUrl" class="form-control" placeholder="https://exemple.com">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="entryNotes">Notes complémentaires</label>
+            <textarea id="entryNotes" class="form-control" rows="3" placeholder="Codes de récupération, questions secrètes, informations utiles..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="deleteEntryBtn" class="btn btn-danger hidden">Supprimer</button>
+          <div style="display: flex; gap: 8px; margin-left: auto;">
+            <button type="button" class="btn btn-secondary close-modal" data-modal="itemModal">Annuler</button>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODALE : GÉNÉRATEUR DE MOT DE PASSE -->
+  <div id="generatorModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">Générateur de mot de passe</h2>
+        <button type="button" class="btn-icon close-modal" data-modal="generatorModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="gen-output">
+          <span id="generatedPasswordText"></span>
+          <div style="display: flex; gap: 4px; flex-shrink: 0;">
+            <button type="button" id="refreshGenBtn" class="btn-icon" title="Régénérer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            </button>
+            <button type="button" id="copyGenBtn" class="btn-icon" title="Copier">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="range-row">
+          <label for="genLength">Longueur : <strong id="genLengthVal">20</strong> caractères</label>
+          <input type="range" id="genLength" min="8" max="64" value="20" style="width: 55%;">
+        </div>
+
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" id="genUpper" checked> Majuscules (A-Z)</label>
+          <label class="checkbox-label"><input type="checkbox" id="genLower" checked> Minuscules (a-z)</label>
+          <label class="checkbox-label"><input type="checkbox" id="genNumbers" checked> Chiffres (0-9)</label>
+          <label class="checkbox-label"><input type="checkbox" id="genSymbols" checked> Symboles (!@#$%)</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary close-modal" data-modal="generatorModal" style="margin-left: auto;">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE DE CONFIRMATION PERSONNALISÉE (REMPLACE ALERT/CONFIRM) -->
+  <div id="confirmModal" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="confirmTitle">Confirmation</h2>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage" style="font-size: 0.9375rem; color: var(--text-muted);"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="confirmCancelBtn" class="btn btn-secondary" style="margin-left: auto;">Annuler</button>
+        <button type="button" id="confirmOkBtn" class="btn btn-danger">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input caché pour l'importation de fichier JSON -->
+  <input type="file" id="importFileInput" accept=".json,application/json" class="hidden">
+
+  <!-- Notification discrète -->
+  <div id="toast" class="toast hidden-toast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toastMessage">Copié dans le presse-papiers</span>
+  </div>
+
+  <script>
+    /**
+     * CoffreLocal - Gestionnaire de mots de passe local chiffré (AES-256-GCM + PBKDF2)
+     * Fonctionne 100 % côté client sans serveur ni stockage externe.
+     */
+    (function () {
+      "use strict";
+
+      const STORAGE_KEY = "coffrelocal_vault_v1";
+      const PBKDF2_ITERATIONS = 250000;
+      const AUTO_LOCK_MS = 5 * 60 * 1000; // 5 minutes d'inactivité
+
+      // État en mémoire vive (effacé au verrouillage)
+      let masterKeyCache = null;
+      let vaultSaltBase64 = null;
+      let entries = [];
+      let currentFilter = "all";
+      let searchQuery = "";
+      let inactivityTimer = null;
+
+      // Références DOM
+      const authScreen = document.getElementById("authScreen");
+      const vaultScreen = document.getElementById("vaultScreen");
+      const createVaultForm = document.getElementById("createVaultForm");
+      const unlockVaultForm = document.getElementById("unlockVaultForm");
+      const resetVaultBtn = document.getElementById("resetVaultBtn");
+      const authError = document.getElementById("authError");
+
+      /* ==========================================================================
+         1. UTILITAIRES CRYPTOGRAPHIQUES (WEB CRYPTO API)
+         ========================================================================== */
+
+      function arrayBufferToBase64(buffer) {
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+      }
+
+      function base64ToArrayBuffer(base64) {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes.buffer;
+      }
+
+      // Dérivation d'une clé AES-256 à partir du mot de passe maître
+      async function deriveCryptoKey(password, saltBuffer) {
+        const encoder = new TextEncoder();
+        const keyMaterial = await window.crypto.subtle.importKey(
+          "raw",
+          encoder.encode(password),
+          { name: "PBKDF2" },
+          false,
+          ["deriveKey"]
+        );
+
+        return window.crypto.subtle.deriveKey(
+          {
+            name: "PBKDF2",
+            salt: saltBuffer,
+            iterations: PBKDF2_ITERATIONS,
+            hash: "SHA-256"
+          },
+          keyMaterial,
+          { name: "AES-GCM", length: 256 },
+          false,
+          ["encrypt", "decrypt"]
+        );
+      }
+
+      // Chiffrement des données JSON
+      async function encryptVaultData(dataArray, cryptoKey, saltB64) {
+        const encoder = new TextEncoder();
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const plaintext = encoder.encode(JSON.stringify(dataArray));
+
+        const ciphertextBuffer = await window.crypto.subtle.encrypt(
+          { name: "AES-GCM", iv: iv },
+          cryptoKey,
+          plaintext
+        );
+
+        return {
+          version: 1,
+          kdf: "PBKDF2-SHA256",
+          iterations: PBKDF2_ITERATIONS,
+          salt: saltB64,
+          iv: arrayBufferToBase64(iv),
+          ciphertext: arrayBufferToBase64(ciphertextBuffer),
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      // Déchiffrement des données JSON
+      async function decryptVaultData(encryptedPackage, password) {
+        const saltBuffer = base64ToArrayBuffer(encryptedPackage.salt);
+        const ivBuffer = base64ToArrayBuffer(encryptedPackage.iv);
+        const ciphertextBuffer = base64ToArrayBuffer(encryptedPackage.ciphertext);
+
+        const key = await deriveCryptoKey(password, saltBuffer);
+        const decryptedBuffer = await window.crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: new Uint8Array(ivBuffer) },
+          key,
+          ciphertextBuffer
+        );
+
+        const decoder = new TextDecoder();
+        const parsed = JSON.parse(decoder.decode(decryptedBuffer));
+        return { key, items: parsed };
+      }
+
+      /* ==========================================================================
+         2. PERSISTANCE & GESTION DE SESSION
+         ========================================================================== */
+
+      function getStoredVault() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      async function saveVaultToStorage() {
+        if (!masterKeyCache || !vaultSaltBase64) return;
+        const encrypted = await encryptVaultData(entries, masterKeyCache, vaultSaltBase64);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(encrypted));
+        updateStorageStats();
+      }
+
+      function updateStorageStats() {
+        const raw = localStorage.getItem(STORAGE_KEY) || "";
+        const bytes = new Blob([raw]).size;
+        const kb = (bytes / 1024).toFixed(1);
+        document.getElementById("storageStats").textContent = `Espace utilisé : ${kb} Ko / 1 Go`;
+      }
+
+      function initAuthScreen() {
+        hideAuthError();
+        const existing = getStoredVault();
+        if (existing) {
+          createVaultForm.classList.add("hidden");
+          unlockVaultForm.classList.remove("hidden");
+          resetVaultBtn.classList.remove("hidden");
+          document.getElementById("masterPasswordInput").value = "";
+          setTimeout(() => document.getElementById("masterPasswordInput").focus(), 50);
+        } else {
+          unlockVaultForm.classList.add("hidden");
+          resetVaultBtn.classList.add("hidden");
+          createVaultForm.classList.remove("hidden");
+          document.getElementById("newMasterPassword").value = "";
+          document.getElementById("confirmMasterPassword").value = "";
+        }
+      }
+
+      function showAuthError(msg) {
+        authError.textContent = msg;
+        authError.classList.remove("hidden");
+      }
+
+      function hideAuthError() {
+        authError.classList.add("hidden");
+      }
+
+      function openVaultUI() {
+        authScreen.classList.add("hidden");
+        vaultScreen.classList.remove("hidden");
+        vaultScreen.style.display = "flex";
+        updateStorageStats();
+        renderVault();
+        resetInactivityTimer();
+      }
+
+      function lockVault() {
+        masterKeyCache = null;
+        vaultSaltBase64 = null;
+        entries = [];
+        searchQuery = "";
+        document.getElementById("searchInput").value = "";
+        clearTimeout(inactivityTimer);
+
+        // Fermer toutes les modales ouvertes
+        document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.add("hidden"));
+
+        vaultScreen.classList.add("hidden");
+        vaultScreen.style.display = "none";
+        authScreen.classList.remove("hidden");
+        initAuthScreen();
+      }
+
+      function resetInactivityTimer() {
+        if (!masterKeyCache) return;
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+          lockVault();
+          showToast("Coffre verrouillé automatiquement par inactivité");
+        }, AUTO_LOCK_MS);
+      }
+
+      ["mousemove", "keydown", "click", "touchstart"].forEach(evt => {
+        document.addEventListener(evt, resetInactivityTimer, { passive: true });
+      });
+
+      /* ==========================================================================
+         3. GESTION DES FORMULAIRES D'AUTHENTIFICATION
+         ========================================================================== */
+
+      // Indicateur de force du mot de passe maître
+      document.getElementById("newMasterPassword").addEventListener("input", function (e) {
+        const val = e.target.value;
+        const fill = document.getElementById("masterStrengthFill");
+        const label = document.getElementById("masterStrengthLabel");
+        let score = 0;
+        if (val.length >= 8) score++;
+        if (val.length >= 12) score++;
+        if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+        if (/[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+
+        const states = [
+          { w: "0%", c: "transparent", t: "Vide" },
+          { w: "25%", c: "#dc2626", t: "Faible" },
+          { w: "50%", c: "#d97706", t: "Moyen" },
+          { w: "75%", c: "#2563eb", t: "Bon" },
+          { w: "100%", c: "#16a34a", t: "Excellent" }
+        ];
+        const idx = val.length === 0 ? 0 : Math.min(4, Math.max(1, score - 1));
+        fill.style.width = states[idx].w;
+        fill.style.backgroundColor = states[idx].c;
+        label.textContent = states[idx].t;
+      });
+
+      // Création d'un nouveau coffre
+      createVaultForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        hideAuthError();
+        const pwd = document.getElementById("newMasterPassword").value;
+        const confirm = document.getElementById("confirmMasterPassword").value;
+
+        if (pwd.length < 8) {
+          showAuthError("Le mot de passe maître doit contenir au moins 8 caractères.");
+          return;
+        }
+        if (pwd !== confirm) {
+          showAuthError("Les deux mots de passe ne correspondent pas.");
+          return;
+        }
+
+        try {
+          const salt = window.crypto.getRandomValues(new Uint8Array(16));
+          vaultSaltBase64 = arrayBufferToBase64(salt);
+          masterKeyCache = await deriveCryptoKey(pwd, salt);
+          entries = [];
+          await saveVaultToStorage();
+          openVaultUI();
+          showToast("Coffre-fort créé et chiffré");
+        } catch (err) {
+          showAuthError("Erreur lors de l'initialisation cryptographique.");
+        }
+      });
+
+      // Déverrouillage d'un coffre existant
+      unlockVaultForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        hideAuthError();
+        const pwd = document.getElementById("masterPasswordInput").value;
+        const stored = getStoredVault();
+        const btn = document.getElementById("unlockSubmitBtn");
+
+        if (!stored) {
+          initAuthScreen();
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Déchiffrement...";
+
+        try {
+          const result = await decryptVaultData(stored, pwd);
+          masterKeyCache = result.key;
+          vaultSaltBase64 = stored.salt;
+          entries = Array.isArray(result.items) ? result.items : [];
+          openVaultUI();
+        } catch (err) {
+          showAuthError("Mot de passe maître incorrect ou fichier corrompu.");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Déverrouiller";
+        }
+      });
+
+      // Réinitialisation complète du coffre
+      resetVaultBtn.addEventListener("click", function () {
+        openConfirmDialog(
+          "Supprimer le coffre actuel ?",
+          "Cette action effacera définitivement toutes les données enregistrées sur ce navigateur. Assurez-vous d'avoir une sauvegarde.",
+          () => {
+            localStorage.removeItem(STORAGE_KEY);
+            initAuthScreen();
+            showToast("Coffre réinitialisé");
+          }
+        );
+      });
+
+      /* ==========================================================================
+         4. AFFICHAGE ET GESTION DES ÉLÉMENTS DU COFFRE
+         ========================================================================== */
+
+      function updateCounts() {
+        document.getElementById("count-all").textContent = entries.length;
+        document.getElementById("count-favorites").textContent = entries.filter(i => i.favorite).length;
+        document.getElementById("count-login").textContent = entries.filter(i => i.category === "login").length;
+        document.getElementById("count-card").textContent = entries.filter(i => i.category === "card").length;
+        document.getElementById("count-note").textContent = entries.filter(i => i.category === "note").length;
+      }
+
+      function renderVault() {
+        updateCounts();
+        const listEl = document.getElementById("vaultList");
+        const q = searchQuery.toLowerCase().trim();
+
+        const filtered = entries.filter(item => {
+          if (currentFilter === "favorites" && !item.favorite) return false;
+          if (currentFilter !== "all" && currentFilter !== "favorites" && item.category !== currentFilter) return false;
+
+          if (q) {
+            const hay = `${item.name} ${item.username} ${item.url} ${item.notes}`.toLowerCase();
+            return hay.includes(q);
+          }
+          return true;
+        });
+
+        // Tri alphabétique
+        filtered.sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
+
+        if (filtered.length === 0) {
+          listEl.innerHTML = `
+            <div class="empty-state">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <h3>${entries.length === 0 ? "Votre coffre-fort est vide" : "Aucun résultat trouvé"}</h3>
+              <p>${entries.length === 0 ? "Ajoutez votre premier identifiant pour le sécuriser." : "Essayez un autre terme de recherche ou changez de filtre."}</p>
+              ${entries.length === 0 ? '<button type="button" id="emptyAddBtn" class="btn btn-primary">Ajouter un élément</button>' : ""}
+            </div>
+          `;
+          const emptyBtn = document.getElementById("emptyAddBtn");
+          if (emptyBtn) emptyBtn.addEventListener("click", () => openItemModal());
+          return;
+        }
+
+        listEl.innerHTML = "";
+        filtered.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "vault-item";
+
+          const initials = (item.name || "?").substring(0, 2);
+          const starSvg = item.favorite
+            ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`
+            : "";
+
+          row.innerHTML = `
+            <div class="item-main" data-id="${item.id}">
+              <div class="item-avatar">${escapeHtml(initials)}</div>
+              <div class="item-details">
+                <div class="item-title-row">
+                  <span class="item-title">${escapeHtml(item.name)}</span>
+                  ${starSvg}
+                </div>
+                <div class="item-sub">${escapeHtml(item.username || item.url || "Aucun identifiant")}</div>
+              </div>
+            </div>
+            <div class="item-actions">
+              ${item.username ? `<button type="button" class="action-pill copy-user-btn" data-id="${item.id}" title="Copier l'identifiant">Identifiant</button>` : ""}
+              ${item.password ? `<button type="button" class="action-pill copy-pass-btn" data-id="${item.id}" title="Copier le mot de passe">Mot de passe</button>` : ""}
+              <button type="button" class="btn-icon edit-item-btn" data-id="${item.id}" title="Modifier">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+            </div>
+          `;
+
+          listEl.appendChild(row);
+        });
+      }
+
+      // Délégation d'événements sur la liste
+      document.getElementById("vaultList").addEventListener("click", function (e) {
+        const copyUserBtn = e.target.closest(".copy-user-btn");
+        if (copyUserBtn) {
+          const item = entries.find(i => i.id === copyUserBtn.dataset.id);
+          if (item && item.username) copyToClipboard(item.username, "Identifiant copié");
+          return;
+        }
+
+        const copyPassBtn = e.target.closest(".copy-pass-btn");
+        if (copyPassBtn) {
+          const item = entries.find(i => i.id === copyPassBtn.dataset.id);
+          if (item && item.password) copyToClipboard(item.password, "Mot de passe copié");
+          return;
+        }
+
+        const editTarget = e.target.closest(".item-main, .edit-item-btn");
+        if (editTarget) {
+          const item = entries.find(i => i.id === editTarget.dataset.id);
+          if (item) openItemModal(item);
+        }
+      });
+
+      // Navigation par catégorie
+      document.getElementById("categoryNav").addEventListener("click", function (e) {
+        const btn = e.target.closest(".nav-item");
+        if (!btn) return;
+        document.querySelectorAll("#categoryNav .nav-item").forEach(n => n.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        const labels = {
+          all: "Tous les éléments",
+          favorites: "Favoris",
+          login: "Connexions",
+          card: "Cartes & Banque",
+          note: "Notes sécurisées"
+        };
+        document.getElementById("currentCategoryTitle").textContent = labels[currentFilter] || "Éléments";
+        renderVault();
+      });
+
+      // Recherche instantanée
+      document.getElementById("searchInput").addEventListener("input", function (e) {
+        searchQuery = e.target.value;
+        renderVault();
+      });
+
+      /* ==========================================================================
+         5. MODALE D'AJOUT / ÉDITION D'UN ÉLÉMENT
+         ========================================================================== */
+
+      function openItemModal(item = null) {
+        const modal = document.getElementById("itemModal");
+        const deleteBtn = document.getElementById("deleteEntryBtn");
+        const passInput = document.getElementById("entryPassword");
+        passInput.type = "password";
+
+        if (item) {
+          document.getElementById("itemModalTitle").textContent = "Modifier l'élément";
+          document.getElementById("entryId").value = item.id;
+          document.getElementById("entryCategory").value = item.category || "login";
+          document.getElementById("entryFavorite").checked = Boolean(item.favorite);
+          document.getElementById("entryName").value = item.name || "";
+          document.getElementById("entryUsername").value = item.username || "";
+          document.getElementById("entryPassword").value = item.password || "";
+          document.getElementById("entryUrl").value = item.url || "";
+          document.getElementById("entryNotes").value = item.notes || "";
+          deleteBtn.classList.remove("hidden");
+        } else {
+          document.getElementById("itemModalTitle").textContent = "Nouvel élément";
+          document.getElementById("itemForm").reset();
+          document.getElementById("entryId").value = "";
+          if (currentFilter !== "all" && currentFilter !== "favorites") {
+            document.getElementById("entryCategory").value = currentFilter;
+          }
+          deleteBtn.classList.add("hidden");
+        }
+
+        modal.classList.remove("hidden");
+        setTimeout(() => document.getElementById("entryName").focus(), 50);
+      }
+
+      document.getElementById("newItemBtn").addEventListener("click", () => openItemModal());
+
+      document.getElementById("itemForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const id = document.getElementById("entryId").value;
+        const payload = {
+          id: id || generateUniqueId(),
+          category: document.getElementById("entryCategory").value,
+          favorite: document.getElementById("entryFavorite").checked,
+          name: document.getElementById("entryName").value.trim(),
+          username: document.getElementById("entryUsername").value.trim(),
+          password: document.getElementById("entryPassword").value,
+          url: document.getElementById("entryUrl").value.trim(),
+          notes: document.getElementById("entryNotes").value,
+          updatedAt: Date.now()
+        };
+
+        if (id) {
+          const idx = entries.findIndex(i => i.id === id);
+          if (idx !== -1) entries[idx] = payload;
+        } else {
+          entries.push(payload);
+        }
+
+        await saveVaultToStorage();
+        document.getElementById("itemModal").classList.add("hidden");
+        renderVault();
+        showToast(id ? "Élément mis à jour" : "Élément ajouté au coffre");
+      });
+
+      document.getElementById("deleteEntryBtn").addEventListener("click", function () {
+        const id = document.getElementById("entryId").value;
+        if (!id) return;
+        openConfirmDialog(
+          "Supprimer cet élément ?",
+          "Cet identifiant sera définitivement retiré de votre coffre-fort.",
+          async () => {
+            entries = entries.filter(i => i.id !== id);
+            await saveVaultToStorage();
+            document.getElementById("itemModal").classList.add("hidden");
+            renderVault();
+            showToast("Élément supprimé");
+          }
+        );
+      });
+
+      // Bouton de génération rapide dans le formulaire
+      document.getElementById("inlineGenerateBtn").addEventListener("click", function () {
+        const passInput = document.getElementById("entryPassword");
+        passInput.value = createStrongPassword(20, true, true, true, true);
+        passInput.type = "text";
+        showToast("Mot de passe fort généré");
+      });
+
+      /* ==========================================================================
+         6. GÉNÉRATEUR DE MOT DE PASSE CRYPTOGRAPHIQUEMENT SÛR
+         ========================================================================== */
+
+      function createStrongPassword(length, useUpper, useLower, useNumbers, useSymbols) {
+        const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const lower = "abcdefghijklmnopqrstuvwxyz";
+        const numbers = "0123456789";
+        const symbols = "!@#$%^&*()-_=+[]{}|;:,.<>?";
+
+        let pool = "";
+        const guaranteed = [];
+
+        if (useUpper) { pool += upper; guaranteed.push(randomChar(upper)); }
+        if (useLower) { pool += lower; guaranteed.push(randomChar(lower)); }
+        if (useNumbers) { pool += numbers; guaranteed.push(randomChar(numbers)); }
+        if (useSymbols) { pool += symbols; guaranteed.push(randomChar(symbols)); }
+
+        if (!pool) {
+          pool = lower + numbers;
+          guaranteed.push(randomChar(lower));
+        }
+
+        const chars = [...guaranteed];
+        while (chars.length < length) {
+          chars.push(randomChar(pool));
+        }
+
+        // Mélange de Fisher-Yates avec aléatoire cryptographique
+        for (let i = chars.length - 1; i > 0; i--) {
+          const j = secureRandomInt(i + 1);
+          [chars[i], chars[j]] = [chars[j], chars[i]];
+        }
+
+        return chars.join("");
+      }
+
+      function secureRandomInt(max) {
+        const array = new Uint32Array(1);
+        window.crypto.getRandomValues(array);
+        return array[0] % max;
+      }
+
+      function randomChar(str) {
+        return str[secureRandomInt(str.length)];
+      }
+
+      function refreshGeneratorUI() {
+        const len = parseInt(document.getElementById("genLength").value, 10);
+        document.getElementById("genLengthVal").textContent = len;
+        const u = document.getElementById("genUpper").checked;
+        const l = document.getElementById("genLower").checked;
+        const n = document.getElementById("genNumbers").checked;
+        const s = document.getElementById("genSymbols").checked;
+
+        if (!u && !l && !n && !s) {
+          document.getElementById("genLower").checked = true;
+        }
+
+        const pwd = createStrongPassword(
+          len,
+          document.getElementById("genUpper").checked,
+          document.getElementById("genLower").checked,
+          document.getElementById("genNumbers").checked,
+          document.getElementById("genSymbols").checked
+        );
+        document.getElementById("generatedPasswordText").textContent = pwd;
+      }
+
+      document.getElementById("openGeneratorBtn").addEventListener("click", () => {
+        refreshGeneratorUI();
+        document.getElementById("generatorModal").classList.remove("hidden");
+      });
+
+      ["genLength", "genUpper", "genLower", "genNumbers", "genSymbols"].forEach(id => {
+        document.getElementById(id).addEventListener("input", refreshGeneratorUI);
+      });
+
+      document.getElementById("refreshGenBtn").addEventListener("click", refreshGeneratorUI);
+      document.getElementById("copyGenBtn").addEventListener("click", () => {
+        const text = document.getElementById("generatedPasswordText").textContent;
+        copyToClipboard(text, "Mot de passe généré copié");
+      });
+
+      /* ==========================================================================
+         7. EXPORT / IMPORT DE SAUVEGARDES CHIFFRÉES (.JSON)
+         ========================================================================== */
+
+      document.getElementById("exportVaultBtn").addEventListener("click", function () {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+
+        const blob = new Blob([raw], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const dateStr = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `coffrelocal-sauvegarde-${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast("Sauvegarde chiffrée téléchargée");
+      });
+
+      const importFileInput = document.getElementById("importFileInput");
+      document.getElementById("authImportBtn").addEventListener("click", () => importFileInput.click());
+      document.getElementById("vaultImportBtn").addEventListener("click", () => importFileInput.click());
+
+      importFileInput.addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          try {
+            const parsed = JSON.parse(evt.target.result);
+            if (!parsed.salt || !parsed.iv || !parsed.ciphertext) {
+              throw new Error("Format invalide");
+            }
+            openConfirmDialog(
+              "Importer cette sauvegarde ?",
+              "Le coffre-fort importé remplacera les données actuelles sur ce navigateur. Vous aurez besoin de son mot de passe maître pour l'ouvrir.",
+              () => {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                lockVault();
+                showToast("Sauvegarde importée. Déverrouillez le coffre.");
+              }
+            );
+          } catch (err) {
+            showToast("Fichier de sauvegarde invalide ou corrompu");
+          } finally {
+            importFileInput.value = "";
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      /* ==========================================================================
+         8. UTILITAIRES D'INTERFACE
+         ========================================================================== */
+
+      document.getElementById("lockVaultBtn").addEventListener("click", () => {
+        lockVault();
+        showToast("Coffre verrouillé");
+      });
+
+      // Boutons Afficher / Masquer mot de passe
+      document.querySelectorAll(".toggle-vis").forEach(btn => {
+        btn.addEventListener("click", function () {
+          const input = document.getElementById(this.dataset.target);
+          if (!input) return;
+          input.type = input.type === "password" ? "text" : "password";
+        });
+      });
+
+      // Fermeture des modales
+      document.querySelectorAll(".close-modal").forEach(btn => {
+        btn.addEventListener("click", function () {
+          document.getElementById(this.dataset.modal).classList.add("hidden");
+        });
+      });
+
+      // Changement de thème clair / sombre
+      document.getElementById("themeToggleBtn").addEventListener("click", function () {
+        const root = document.documentElement;
+        if (root.classList.contains("dark")) {
+          root.classList.remove("dark", "auto-theme");
+          showToast("Thème clair activé");
+        } else {
+          root.classList.remove("auto-theme");
+          root.classList.add("dark");
+          showToast("Thème sombre activé");
+        }
+      });
+
+      function openConfirmDialog(title, message, onConfirm) {
+        const modal = document.getElementById("confirmModal");
+        document.getElementById("confirmTitle").textContent = title;
+        document.getElementById("confirmMessage").textContent = message;
+        modal.classList.remove("hidden");
+
+        const okBtn = document.getElementById("confirmOkBtn");
+        const cancelBtn = document.getElementById("confirmCancelBtn");
+
+        const cleanup = () => {
+          modal.classList.add("hidden");
+          okBtn.onclick = null;
+          cancelBtn.onclick = null;
+        };
+
+        cancelBtn.onclick = cleanup;
+        okBtn.onclick = () => {
+          cleanup();
+          onConfirm();
+        };
+      }
+
+      function copyToClipboard(text, message) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand("copy");
+          showToast(message);
+        } catch (err) {
+          showToast("Impossible de copier");
+        }
+        document.body.removeChild(textarea);
+      }
+
+      let toastTimeout = null;
+      function showToast(msg) {
+        const toast = document.getElementById("toast");
+        document.getElementById("toastMessage").textContent = msg;
+        toast.classList.remove("hidden-toast");
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          toast.classList.add("hidden-toast");
+        }, 2800);
+      }
+
+      function generateUniqueId() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // Initialisation au chargement
+      initAuthScreen();
+    })();
+  </script>
+</body>
+</html>
